@@ -95,7 +95,7 @@ function initParticles() {
 
 async function checkHealth() {
   try {
-    const resp = await fetch('/api/health');
+    const resp = await fetch('https://sara-pod-tar-dairy.trycloudflare.com/api/health');
     const data = await resp.json();
     
     if (data.ollama?.status === 'ok' && data.ollama?.target_model_ready) {
@@ -167,7 +167,7 @@ async function deleteDoc(source) {
   if (!confirm(`确定要从知识库中删除「${source}」吗？`)) return;
   
   try {
-    const resp = await fetch(`/api/knowledge-base/${encodeURIComponent(source)}`, {
+    const resp = await fetch(`https://sara-pod-tar-dairy.trycloudflare.com/api/knowledge-base/${encodeURIComponent(source)}`, {
       method: 'DELETE'
     });
     
@@ -291,7 +291,7 @@ async function streamAIResponse(question) {
   let inThinking = false;
   
   try {
-    const resp = await fetch('/api/chat', {
+    const resp = await fetch('https://sara-pod-tar-dairy.trycloudflare.com/api/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -491,7 +491,7 @@ async function generateMindmapFor(question, answer) {
   dom.mindmapTitle.textContent = question.slice(0, 50) + (question.length > 50 ? '...' : '');
   
   try {
-    const resp = await fetch('/api/mindmap', {
+    const resp = await fetch('https://sara-pod-tar-dairy.trycloudflare.com/api/mindmap', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ question, answer })
@@ -603,7 +603,7 @@ async function uploadFile(file) {
     formData.append('file', file);
     formData.append('doc_type', 'custom');
     
-    const resp = await fetch('/api/upload', {
+    const resp = await fetch('https://sara-pod-tar-dairy.trycloudflare.com/api/upload', {
       method: 'POST',
       body: formData
     });
@@ -820,7 +820,7 @@ async function startImport() {
       formData.append('file', file);
       formData.append('doc_type', docType);
       
-      const resp = await fetch('/api/upload', { method: 'POST', body: formData });
+      const resp = await fetch('https://sara-pod-tar-dairy.trycloudflare.com/api/upload', { method: 'POST', body: formData });
       const data = await resp.json();
       
       if (resp.ok) {
