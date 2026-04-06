@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>法律合规 AI 助手 | LexMind</title>
+  <meta name="description" content="基于 DeepSeek R1 的法律合规智能问答系统，提供专业的中国法律合规咨询和思维导图分析" />
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Serif+SC:wght@400;600;700&display=swap" rel="stylesheet" />
+  
+  <!-- Markmap for mind maps -->
+  <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+  <script src="/static/lib/markmap-view.js"></script>
+  <script src="/static/lib/markmap-lib.js"></script>
+  
+  <!-- Marked for markdown rendering -->
+  <script src="https://cdn.jsdelivr.net/npm/marked@13.0.3/marked.min.js"></script>
+  
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+
+<!-- Background particles -->
+<div class="bg-particles" id="particles"></div>
+
+<!-- App Layout -->
+<div class="app-layout">
+  
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="logo">
+        <div class="logo-icon">⚖️</div>
+        <div class="logo-text">
+          <span class="logo-title">LexMind</span>
+          <span class="logo-sub">法律合规 AI</span>
+        </div>
+      </div>
+      <button class="sidebar-toggle" id="sidebarToggle" title="收起侧边栏">‹</button>
+    </div>
+    
+    <!-- New Chat -->
+    <button class="btn-new-chat" id="newChatBtn">
+      <span class="btn-icon">✦</span>
+      新建对话
+    </button>
+    
+    <!-- Quick Questions -->
+    <div class="sidebar-section">
+      <div class="section-label">快速提问</div>
+      <div class="quick-questions">
+        <button class="quick-q" data-q="公司注册需要满足哪些法律要求？注册资本的规定是什么？">🏢 公司注册法律要求</button>
+        <button class="quick-q" data-q="员工辞退需要支付哪些补偿？N+1是什么意思？">💼 员工辞退补偿规定</button>
+        <button class="quick-q" data-q="企业收集用户个人信息需要满足哪些合规要求？数据安全法如何规定？">🔒 数据隐私合规要求</button>
+        <button class="quick-q" data-q="签订合同时需要注意哪些法律风险？格式条款有什么限制？">📋 合同签订法律风险</button>
+        <button class="quick-q" data-q="公司注册商标需要如何操作？侵犯他人商标会有什么法律后果？">™️ 商标注册与保护</button>
+        <button class="quick-q" data-q="企业税务合规需要注意哪些问题？增值税和企业所得税如何处理？">💰 企业税务合规要点</button>
+      </div>
+    </div>
+    
+    <!-- Knowledge Base Panel -->
+    <div class="sidebar-section kb-section">
+      <div class="section-label-row">
+        <span class="section-label">知识库管理</span>
+        <button class="kb-import-btn" id="openImportModal" title="导入文档">
+          <span>+</span> 导入
+        </button>
+      </div>
+      <div class="kb-stats" id="kbStats">
+        <div class="kb-stat-item">
+          <span class="kb-stat-num" id="kbDocCount">-</span>
+          <span class="kb-stat-label">份文档</span>
+        </div>
+        <div class="kb-stat-item">
+          <span class="kb-stat-num" id="kbChunkCount">-</span>
+          <span class="kb-stat-label">个片段</span>
+        </div>
+      </div>
+      <div class="kb-docs" id="kbDocs"></div>
+    </div>
+    
+    <!-- RAG Toggle -->
+    <div class="rag-toggle-section">
+      <label class="toggle-label">
+        <span>智能检索（RAG）</span>
+        <div class="toggle-switch">
+          <input type="checkbox" id="ragToggle" checked />
+          <span class="toggle-slider"></span>
+        </div>
+      </label>
+      <div class="toggle-hint">开启后将自动检索相关法律条文</div>
+    </div>
+    
+    <!-- Status -->
+    <div class="sidebar-footer">
+      <div class="status-indicator" id="statusIndicator">
+        <span class="status-dot" id="statusDot"></span>
+        <span id="statusText">检查服务状态...</span>
+      </div>
+    </div>
+  </aside>
+  
+  <!-- Main Content -->
+  <main class="main-content">
+    
+    <!-- Top Bar -->
+    <div class="topbar">
+      <button class="topbar-menu" id="menuBtn" style="display:none">☰</button>
+      <div class="topbar-title">
+        <span class="topbar-topic" id="currentTopic">法律合规智能问答</span>
+      </div>
+      <div class="topbar-actions">
+        <button class="topbar-btn" id="mindmapBtn" title="生成思维导图" disabled>
+          <span>🗺️</span> 思维导图
+        </button>
+        <button class="topbar-btn" id="clearBtn" title="清空对话">
+          <span>🗑️</span> 清空
+        </button>
+      </div>
+    </div>
+    
+    <!-- Chat Area -->
+    <div class="chat-container" id="chatContainer">
+      
+      <!-- Welcome Screen -->
+      <div class="welcome-screen" id="welcomeScreen">
+        <div class="welcome-badge">⚖️ LexMind</div>
+        <h1 class="welcome-title">法律合规 AI 智能助手</h1>
+        <p class="welcome-desc">
+          基于 DeepSeek R1 8B 模型，为您提供专业的中国法律法规解读、合规风险分析和操作建议
+        </p>
+        <div class="welcome-features">
+          <div class="feature-card">
+            <div class="feature-icon">📚</div>
+            <div class="feature-name">知识库检索</div>
+            <div class="feature-desc">内置公司法、劳动法、数据安全法等核心法律</div>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon">🧠</div>
+            <div class="feature-name">深度推理</div>
+            <div class="feature-desc">DeepSeek R1 深度思考，给出严谨的法律分析</div>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon">🗺️</div>
+            <div class="feature-name">思维导图</div>
+            <div class="feature-desc">一键将法律解读转化为直观的思维导图</div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Messages -->
+      <div class="messages" id="messages"></div>
+    </div>
+    
+    <!-- Input Area -->
+    <div class="input-area">
+      <div class="input-container">
+        <textarea 
+          id="userInput" 
+          class="user-input" 
+          placeholder="请输入您的法律合规问题..."
+          rows="1"
+        ></textarea>
+        <button class="send-btn" id="sendBtn" disabled>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M22 2L11 13M22 2L15 22L11 13M11 13L2 9L22 2"/>
+          </svg>
+        </button>
+      </div>
+      <div class="input-footer">
+        <span>LexMind · DeepSeek R1 8B · 本地运行</span>
+        <span>内容仅供参考，不构成正式法律意见</span>
+      </div>
+    </div>
+    
+  </main>
+</div>
+
+<!-- Mind Map Modal -->
+<div class="modal-overlay" id="mindmapModal">
+  <div class="modal-container">
+    <div class="modal-header">
+      <div class="modal-title">
+        <span>🗺️</span>
+        <span id="mindmapTitle">知识思维导图</span>
+      </div>
+      <div class="modal-actions">
+        <button class="modal-btn" id="downloadMindmap" title="下载">⬇️ 导出</button>
+        <button class="modal-close" id="closeMindmap">✕</button>
+      </div>
+    </div>
+    <div class="modal-body">
+      <div class="mindmap-loading" id="mindmapLoading">
+        <div class="loading-spinner"></div>
+        <div>AI 正在生成思维导图...</div>
+      </div>
+      <svg id="mindmapSvg" class="mindmap-svg"></svg>
+    </div>
+  </div>
+</div>
+
+<!-- Import Document Modal -->
+<div class="modal-overlay" id="importModal">
+  <div class="modal-container import-modal-container">
+    <div class="modal-header">
+      <div class="modal-title">
+        <span>📥</span>
+        <span>导入法律文档</span>
+      </div>
+      <button class="modal-close" id="closeImportModal">✕</button>
+    </div>
+    <div class="import-modal-body">
+
+      <!-- Format Cards -->
+      <div class="format-cards">
+        <div class="format-card" data-ext=".pdf">
+          <div class="format-icon">📕</div>
+          <div class="format-name">PDF</div>
+          <div class="format-desc">法律文书、合同、规章制度</div>
+        </div>
+        <div class="format-card" data-ext=".docx">
+          <div class="format-icon">📘</div>
+          <div class="format-name">Word</div>
+          <div class="format-desc">.docx 格式的法律文档</div>
+        </div>
+        <div class="format-card" data-ext=".md">
+          <div class="format-icon">📗</div>
+          <div class="format-name">Markdown</div>
+          <div class="format-desc">结构化法律笔记与备忘录</div>
+        </div>
+        <div class="format-card" data-ext=".txt">
+          <div class="format-icon">📄</div>
+          <div class="format-name">纯文本</div>
+          <div class="format-desc">TXT 格式的法律资料</div>
+        </div>
+      </div>
+
+      <!-- Drop Zone -->
+      <div class="drop-zone" id="dropZone">
+        <input type="file" id="importFileInput"
+          accept=".pdf,.docx,.md,.txt"
+          multiple hidden />
+        <div class="drop-zone-inner" id="dropZoneInner">
+          <div class="drop-zone-icon">⬆️</div>
+          <div class="drop-zone-title">拖拽文件到此处，或点击选择</div>
+          <div class="drop-zone-hint">支持 PDF / Word(.docx) / Markdown / TXT · 单次最多 10 个文件 · 每个文件不超过 20MB</div>
+          <button class="drop-zone-btn" onclick="document.getElementById('importFileInput').click()">
+            选择文件
+          </button>
+        </div>
+      </div>
+
+      <!-- File Queue -->
+      <div class="file-queue" id="fileQueue" style="display:none">
+        <div class="file-queue-header">
+          <span id="fileQueueTitle">待导入文件</span>
+          <button class="queue-clear-btn" id="clearQueue">清空</button>
+        </div>
+        <div class="file-list" id="fileList"></div>
+      </div>
+
+      <!-- Doc Type Selector -->
+      <div class="doc-type-section">
+        <label class="doc-type-label">文档分类</label>
+        <div class="doc-type-options">
+          <label class="doc-type-opt">
+            <input type="radio" name="docType" value="custom" checked />
+            <span>自定义</span>
+          </label>
+          <label class="doc-type-opt">
+            <input type="radio" name="docType" value="公司法" />
+            <span>公司法</span>
+          </label>
+          <label class="doc-type-opt">
+            <input type="radio" name="docType" value="劳动法" />
+            <span>劳动法</span>
+          </label>
+          <label class="doc-type-opt">
+            <input type="radio" name="docType" value="数据安全" />
+            <span>数据安全</span>
+          </label>
+          <label class="doc-type-opt">
+            <input type="radio" name="docType" value="合同法" />
+            <span>合同法</span>
+          </label>
+          <label class="doc-type-opt">
+            <input type="radio" name="docType" value="其他" />
+            <span>其他</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Import Actions -->
+      <div class="import-actions">
+        <div class="import-progress-area" id="importProgressArea" style="display:none">
+          <div class="import-progress-bar">
+            <div class="import-progress-fill" id="importProgressFill"></div>
+          </div>
+          <div class="import-progress-text" id="importProgressText">准备导入...</div>
+        </div>
+        <button class="import-submit-btn" id="importSubmitBtn" disabled>
+          <span class="import-btn-icon">📥</span>
+          开始导入到知识库
+        </button>
+      </div>
+
+      <!-- Import Results -->
+      <div class="import-results" id="importResults" style="display:none"></div>
+
+    </div>
+  </div>
+</div>
+
+<script src="/static/app.js"></script>
+</body>
+</html>
